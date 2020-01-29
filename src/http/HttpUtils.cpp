@@ -18,8 +18,21 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "HttpUtils.h"
 
+#include <QtConcurrent/QtConcurrent>
+
 #include "../obs-websocket.h"
 #include "../Config.h"
+
+void HttpUtils::wrapAsync(server::connection_ptr connection, QThreadPool threadPool, std::function<void()> callback)
+{
+	connection->defer_http_response();
+	QtConcurrent::run(&threadPool, [connection, callback]() {
+		callback();
+
+		websocketpp::lib::error_code ec;
+		connection->send_http_response(ec);
+	});
+}
 
 void HttpUtils::handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
 {

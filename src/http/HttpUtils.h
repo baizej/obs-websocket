@@ -20,11 +20,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <functional>
 #include <QtCore/QList>
+#include <QtCore/QThreadPool>
 
 #include "../server-defs.h"
 #include "../ConnectionProperties.h"
 
 namespace HttpUtils
 {
+    void wrapAsync(server::connection_ptr connection, QThreadPool threadPool, std::function<void()> callback);
     void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
 }
