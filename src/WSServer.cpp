@@ -211,11 +211,11 @@ void WSServer::onHttpRequest(connection_hdl hdl)
 		return;
 	}
 
-	bool routeMatched = http::simpleAsyncRouter(con, {
+	bool routeMatched = HttpUtils::simpleAsyncRouter(con, {
 		{
 			http::Method::POST, "/execute",
 			[con]() {
-				http::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+				HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
 					WSRequestHandler requestHandler(connProperties);
 					OBSRemoteProtocol protocol;
 					return protocol.processMessage(requestHandler, requestBody);

@@ -43,8 +43,10 @@ namespace http
         QString spec;
         RouteHandler routeCallback;
     } RouterEntry;
-
-    void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
-
-    bool simpleAsyncRouter(server::connection_ptr connection, QList<http::RouterEntry> routes);
 }
+
+class HttpUtils {
+public:
+    static bool simpleAsyncRouter(server::connection_ptr connection, QList<http::RouterEntry> routes);
+    static void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
+};

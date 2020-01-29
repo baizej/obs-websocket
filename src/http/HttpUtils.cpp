@@ -37,7 +37,7 @@ http::Method methodStringToEnum(const QString& method) {
 	return methodMap.key(method, http::Method::UNKNOWN_METHOD);
 }
 
-void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
+void HttpUtils::handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
 {
 	websocketpp::http::parser::request request = con->get_request();
 
@@ -78,7 +78,7 @@ bool matchRoute(const QString& routeSpec, const QString& requestUri)
 	return requestUri.startsWith(routeSpec);
 }
 
-bool simpleAsyncRouter(server::connection_ptr connection, QList<http::RouterEntry> routes)
+bool HttpUtils::simpleAsyncRouter(server::connection_ptr connection, QList<http::RouterEntry> routes)
 {
 	websocketpp::config::asio::request_type httpRequest = connection->get_request();
 
