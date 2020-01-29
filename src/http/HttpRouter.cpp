@@ -61,14 +61,9 @@ bool HttpRouter::handleConnection(server::connection_ptr connection)
 			matchesRoute(route.spec, requestUri) &&
 			(route.method == http::Method::ANY_METHOD || requestMethod == route.method)
 		) {
-			connection->defer_http_response();
-			QtConcurrent::run([connection, route]() {
+			HttpUtils::wrapAsync(connection, [connection, route]() {
 				route.routeCallback(connection);
-
-				websocketpp::lib::error_code ec;
-				connection->send_http_response(ec);
 			});
-
 			return true;
 		}
 	}

@@ -23,10 +23,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "../obs-websocket.h"
 #include "../Config.h"
 
-void HttpUtils::wrapAsync(server::connection_ptr connection, QThreadPool threadPool, std::function<void()> callback)
+void HttpUtils::wrapAsync(server::connection_ptr connection, std::function<void()> callback)
 {
 	connection->defer_http_response();
-	QtConcurrent::run(&threadPool, [connection, callback]() {
+	QtConcurrent::run([connection, callback]() {
 		callback();
 
 		websocketpp::lib::error_code ec;
