@@ -32,7 +32,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "Config.h"
 #include "Utils.h"
 #include "protocol/OBSRemoteProtocol.h"
-#include "http/HttpUtils.h"
+#include "http/HttpRouter.h"
 
 QT_USE_NAMESPACE
 
@@ -211,11 +211,11 @@ void WSServer::onHttpRequest(connection_hdl hdl)
 		return;
 	}
 
-	bool routeMatched = HttpUtils::simpleAsyncRouter(con, {
+	bool routeMatched = HttpRouter::simpleAsyncRouter(con, {
 		{
 			http::Method::POST, "/execute",
 			[con]() {
-				HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+				HttpRouter::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
 					WSRequestHandler requestHandler(connProperties);
 					OBSRemoteProtocol protocol;
 					return protocol.processMessage(requestHandler, requestBody);

@@ -50,7 +50,7 @@ set(obs-websocket_SOURCES
 	src/rpc/RpcResponse.cpp
 	src/rpc/RpcEvent.cpp
 	src/protocol/OBSRemoteProtocol.cpp
-	src/http/HttpUtils.cpp
+	src/http/HttpRouter.cpp
 	src/forms/settings-dialog.cpp)
 
 set(obs-websocket_HEADERS
@@ -65,7 +65,7 @@ set(obs-websocket_HEADERS
 	src/rpc/RpcResponse.h
 	src/rpc/RpcEvent.h
 	src/protocol/OBSRemoteProtocol.h
-	src/http/HttpUtils.h
+	src/http/HttpRouter.h
 	src/forms/settings-dialog.h)
 
 # --- Platform-independent build settings ---

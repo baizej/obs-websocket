@@ -35,18 +35,19 @@ namespace http
         PUT,
         DELETE
     };
+    
+}
 
+class HttpRouter {
+public:
     typedef std::function<void()> RouteHandler;
 
     typedef struct {
-        Method method;
+        http::Method method;
         QString spec;
         RouteHandler routeCallback;
     } RouterEntry;
-}
 
-class HttpUtils {
-public:
-    static bool simpleAsyncRouter(server::connection_ptr connection, QList<http::RouterEntry> routes);
+    static bool simpleAsyncRouter(server::connection_ptr connection, QList<RouterEntry> routes);
     static void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
 };

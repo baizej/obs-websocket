@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include "HttpUtils.h"
+#include "HttpRouter.h"
 
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QHash>
@@ -37,7 +37,7 @@ http::Method methodStringToEnum(const QString& method) {
 	return methodMap.key(method, http::Method::UNKNOWN_METHOD);
 }
 
-void HttpUtils::handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
+void HttpRouter::handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
 {
 	websocketpp::http::parser::request request = con->get_request();
 
@@ -78,7 +78,7 @@ bool matchRoute(const QString& routeSpec, const QString& requestUri)
 	return requestUri.startsWith(routeSpec);
 }
 
-bool HttpUtils::simpleAsyncRouter(server::connection_ptr connection, QList<http::RouterEntry> routes)
+bool HttpRouter::simpleAsyncRouter(server::connection_ptr connection, QList<RouterEntry> routes)
 {
 	websocketpp::config::asio::request_type httpRequest = connection->get_request();
 
@@ -91,7 +91,7 @@ bool HttpUtils::simpleAsyncRouter(server::connection_ptr connection, QList<http:
 	);
 	http::Method requestMethod = methodStringToEnum(methodString);
 
-	for (http::RouterEntry route : routes) {
+	for (RouterEntry route : routes) {
 		if (
 			matchRoute(route.spec, requestUri) &&
 			(route.method == http::Method::ANY_METHOD || requestMethod == route.method)
