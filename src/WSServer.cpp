@@ -51,8 +51,7 @@ WSServer::WSServer()
 {
 	_httpRouter = HttpRouter({
 		{
-			http::Method::POST, "/execute",
-			[](server::connection_ptr con) {
+			http::Method::POST, "/execute", [](server::connection_ptr con) {
 				HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
 					WSRequestHandler requestHandler(connProperties);
 					OBSRemoteProtocol protocol;
