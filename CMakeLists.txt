@@ -56,6 +56,7 @@ set(obs-websocket_SOURCES
 
 set(obs-websocket_HEADERS
 	src/obs-websocket.h
+	src/server-defs.h
 	src/WSServer.h
 	src/ConnectionProperties.h
 	src/WSRequestHandler.h

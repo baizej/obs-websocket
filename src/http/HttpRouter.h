@@ -21,7 +21,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <functional>
 #include <QtCore/QList>
 
-#include "../WSServer.h"
+#include "../server-defs.h"
 
 namespace http 
 {
@@ -40,7 +40,7 @@ namespace http
 
 class HttpRouter {
 public:
-    typedef std::function<void()> RouteHandler;
+    typedef std::function<void(server::connection_ptr)> RouteHandler;
 
     typedef struct {
         http::Method method;
@@ -48,5 +48,11 @@ public:
         RouteHandler routeCallback;
     } RouterEntry;
 
-    static bool simpleAsyncRouter(server::connection_ptr connection, QList<RouterEntry> routes);
+    explicit HttpRouter(QList<RouterEntry> routes = {});
+    bool handleConnection(server::connection_ptr connection);
+
+private:
+    bool matchesRoute(const QString& routeSpec, const QString& requestUri);
+
+    QList<RouterEntry> _routes;
 };

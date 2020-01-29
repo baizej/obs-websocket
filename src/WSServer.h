@@ -26,16 +26,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <QtCore/QVariantHash>
 #include <QtCore/QThreadPool>
 
-#include <websocketpp/config/asio_no_tls.hpp>
-#include <websocketpp/server.hpp>
-
+#include "obs-websocket.h"
+#include "server-defs.h"
 #include "ConnectionProperties.h"
 #include "WSRequestHandler.h"
 #include "rpc/RpcEvent.h"
+#include "http/HttpRouter.h"
 
 using websocketpp::connection_hdl;
-
-typedef websocketpp::server<websocketpp::config::asio> server;
 
 class WSServer : public QObject
 {
@@ -62,6 +60,7 @@ private:
 	void notifyDisconnection(QString clientIp);
 
 	server _server;
+	HttpRouter _httpRouter;
 	quint16 _serverPort;
 	std::set<connection_hdl, std::owner_less<connection_hdl>> _connections;
 	std::map<connection_hdl, ConnectionProperties, std::owner_less<connection_hdl>> _connectionProperties;

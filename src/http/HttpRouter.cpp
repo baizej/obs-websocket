@@ -37,17 +37,12 @@ http::Method methodStringToEnum(const QString& method) {
 	return methodMap.key(method, http::Method::UNKNOWN_METHOD);
 }
 
-bool matchRoute(const QString& routeSpec, const QString& requestUri)
+HttpRouter::HttpRouter(QList<RouterEntry> routes) :
+	_routes(routes)
 {
-	QString spec = routeSpec.trimmed();
-	// TODO regex parsing
-	if (spec.endsWith("/")) {
-		spec.chop(1);
-	}
-	return requestUri.startsWith(routeSpec);
 }
 
-bool HttpRouter::simpleAsyncRouter(server::connection_ptr connection, QList<RouterEntry> routes)
+bool HttpRouter::handleConnection(server::connection_ptr connection)
 {
 	websocketpp::config::asio::request_type httpRequest = connection->get_request();
 
@@ -60,14 +55,14 @@ bool HttpRouter::simpleAsyncRouter(server::connection_ptr connection, QList<Rout
 	);
 	http::Method requestMethod = methodStringToEnum(methodString);
 
-	for (RouterEntry route : routes) {
+	for (RouterEntry route : _routes) {
 		if (
-			matchRoute(route.spec, requestUri) &&
+			matchesRoute(route.spec, requestUri) &&
 			(route.method == http::Method::ANY_METHOD || requestMethod == route.method)
 		) {
 			connection->defer_http_response();
 			QtConcurrent::run([connection, route]() {
-				route.routeCallback();
+				route.routeCallback(connection);
 
 				websocketpp::lib::error_code ec;
 				connection->send_http_response(ec);
@@ -78,4 +73,14 @@ bool HttpRouter::simpleAsyncRouter(server::connection_ptr connection, QList<Rout
 	}
 
 	return false;
+}
+
+bool HttpRouter::matchesRoute(const QString& routeSpec, const QString& requestUri)
+{
+	QString spec = routeSpec.trimmed();
+	// TODO regex parsing
+	if (spec.endsWith("/")) {
+		spec.chop(1);
+	}
+	return requestUri.startsWith(routeSpec);
 }

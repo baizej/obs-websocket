@@ -1,6 +1,6 @@
 /*
 obs-websocket
-Copyright (C) 2016-2017	Stéphane Lepin <stephane.lepin@gmail.com>
+Copyright (C) 2016-2019	Stéphane Lepin <stephane.lepin@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,13 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <functional>
-#include <QtCore/QList>
+#include <websocketpp/config/asio_no_tls.hpp>
+#include <websocketpp/server.hpp>
 
-#include "../server-defs.h"
-#include "../ConnectionProperties.h"
-
-namespace HttpUtils
-{
-    void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
-}
+typedef websocketpp::server<websocketpp::config::asio> server;

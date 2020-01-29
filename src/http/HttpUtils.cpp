@@ -18,6 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "HttpUtils.h"
 
+#include "../obs-websocket.h"
 #include "../Config.h"
 
 void HttpUtils::handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)

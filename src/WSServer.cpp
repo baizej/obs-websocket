@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
+#include "WSServer.h"
+
 #include <chrono>
 #include <thread>
 
@@ -27,7 +29,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-frontend-api.h>
 #include <util/platform.h>
 
-#include "WSServer.h"
 #include "obs-websocket.h"
 #include "Config.h"
 #include "Utils.h"
@@ -41,11 +42,26 @@ using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
 
+
+
 WSServer::WSServer()
 	: QObject(nullptr),
 	  _connections(),
 	  _clMutex(QMutex::Recursive)
 {
+	_httpRouter = HttpRouter({
+		{
+			http::Method::POST, "/execute",
+			[](server::connection_ptr con) {
+				HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+					WSRequestHandler requestHandler(connProperties);
+					OBSRemoteProtocol protocol;
+					return protocol.processMessage(requestHandler, requestBody);
+				});
+			}
+		}
+	});
+
 	_server.init_asio();
 #ifndef _WIN32
 	_server.set_reuse_addr(true);
@@ -212,18 +228,7 @@ void WSServer::onHttpRequest(connection_hdl hdl)
 		return;
 	}
 
-	bool routeMatched = HttpRouter::simpleAsyncRouter(con, {
-		{
-			http::Method::POST, "/execute",
-			[con]() {
-				HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
-					WSRequestHandler requestHandler(connProperties);
-					OBSRemoteProtocol protocol;
-					return protocol.processMessage(requestHandler, requestBody);
-				});
-			}
-		}
-	});
+	bool routeMatched = _httpRouter.handleConnection(con);
 
 	if (!routeMatched) {
 		// default case: return 426 Upgrade Required
