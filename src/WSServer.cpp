@@ -33,6 +33,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "Utils.h"
 #include "protocol/OBSRemoteProtocol.h"
 #include "http/HttpRouter.h"
+#include "http/HttpUtils.h"
 
 QT_USE_NAMESPACE
 
@@ -215,7 +216,7 @@ void WSServer::onHttpRequest(connection_hdl hdl)
 		{
 			http::Method::POST, "/execute",
 			[con]() {
-				HttpRouter::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+				HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
 					WSRequestHandler requestHandler(connProperties);
 					OBSRemoteProtocol protocol;
 					return protocol.processMessage(requestHandler, requestBody);

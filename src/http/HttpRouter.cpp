@@ -37,37 +37,6 @@ http::Method methodStringToEnum(const QString& method) {
 	return methodMap.key(method, http::Method::UNKNOWN_METHOD);
 }
 
-void HttpRouter::handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
-{
-	websocketpp::http::parser::request request = con->get_request();
-
-	ConnectionProperties connProperties;
-	if (GetConfig()->AuthRequired) {
-		QString authHeaderValue = QString::fromStdString(
-			request.get_header("Authorization")
-		);
-
-		if (GetConfig()->CheckHttpAuth(authHeaderValue)) {
-			connProperties.setAuthenticated(true);
-		} else {
-			con->set_status(websocketpp::http::status_code::unauthorized);
-			con->append_header("WWW-Authenticate", "Basic realm=\"obs-websocket\"");
-			con->set_body("");
-			return;
-		}
-	}
-
-	// can get overriden by the handler callback
-	con->set_status(websocketpp::http::status_code::ok);
-
-	std::string requestBody = request.get_body();
-	std::string responseBody = handlerCb(connProperties, requestBody);
-
-	if (!responseBody.empty()) {
-		con->set_body(responseBody);
-	}
-}
-
 bool matchRoute(const QString& routeSpec, const QString& requestUri)
 {
 	QString spec = routeSpec.trimmed();

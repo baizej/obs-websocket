@@ -23,30 +23,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "../WSServer.h"
 
-namespace http 
+namespace HttpUtils
 {
-    enum Method {
-        UNKNOWN_METHOD = 0,
-        ANY_METHOD,
-        GET,
-        OPTIONS,
-        HEAD,
-        POST,
-        PUT,
-        DELETE
-    };
-    
+    void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
 }
-
-class HttpRouter {
-public:
-    typedef std::function<void()> RouteHandler;
-
-    typedef struct {
-        http::Method method;
-        QString spec;
-        RouteHandler routeCallback;
-    } RouterEntry;
-
-    static bool simpleAsyncRouter(server::connection_ptr connection, QList<RouterEntry> routes);
-};
