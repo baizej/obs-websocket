@@ -211,7 +211,7 @@ void WSServer::onHttpRequest(connection_hdl hdl)
 		return;
 	}
 
-	bool routeMatched = http::simpleAsyncRouter({
+	bool routeMatched = http::simpleAsyncRouter(con, {
 		{
 			http::Method::POST, "/execute",
 			[con]() {
