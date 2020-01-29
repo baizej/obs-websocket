@@ -23,18 +23,19 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <QtCore/QMultiHash>
 
 #include "../Config.h"
+#include "HttpUtils.h"
 
-static const QHash<http::Method, QString> methodMap {
-	{ http::Method::GET, "GET" },
-	{ http::Method::OPTIONS, "OPTIONS" },
-	{ http::Method::HEAD, "HEAD" },
-	{ http::Method::POST, "POST" },
-	{ http::Method::PUT, "PUT" },
-	{ http::Method::DELETE, "DELETE" }
+static const QHash<QString, http::Method> methodMap {
+	{ "GET", http::Method::GET },
+	{ "OPTIONS", http::Method::OPTIONS },
+	{ "HEAD", http::Method::HEAD },
+	{ "POST", http::Method::POST },
+	{ "PUT", http::Method::PUT },
+	{ "DELETE", http::Method::DELETE }
 };
 
 http::Method methodStringToEnum(const QString& method) {
-	return methodMap.key(method, http::Method::UNKNOWN_METHOD);
+	return methodMap.value(method, http::Method::UNKNOWN_METHOD);
 }
 
 HttpRouter::HttpRouter(QList<RouterEntry> routes) :
