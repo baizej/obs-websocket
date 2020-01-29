@@ -253,7 +253,7 @@ void WSServer::onClose(connection_hdl hdl)
 void WSServer::handleHttpExecute(server::connection_ptr con)
 {
 	websocketpp::http::parser::request request = con->get_request();
-	std::string requestBody = request.get_body();
+	std::string payload = request.get_body();
 
 	ConnectionProperties connProperties;
 
@@ -272,8 +272,9 @@ void WSServer::handleHttpExecute(server::connection_ptr con)
 		}
 	}
 
-	WSRequestHandler handler(connProperties);
-	std::string response = handler.processIncomingMessage(requestBody);
+	WSRequestHandler requestHandler(connProperties);
+	OBSRemoteProtocol protocol;
+	std::string response = protocol.processMessage(requestHandler, payload);
 
 	con->set_status(websocketpp::http::status_code::ok);
 	con->set_body(response);
