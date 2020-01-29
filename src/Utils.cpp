@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
+#include <inttypes.h>
 #include <QtWidgets/QMainWindow>
 #include <QtCore/QDir>
 #include <QtCore/QUrl>
@@ -579,7 +580,7 @@ void Utils::StartReplayBuffer() {
 		obs_output_t* rpOutput = obs_frontend_get_replay_buffer_output();
 		OBSData outputHotkeys = obs_hotkeys_save_output(rpOutput);
 
-		OBSData dummyBinding = obs_data_create();
+		OBSDataAutoRelease dummyBinding = obs_data_create();
 		obs_data_set_bool(dummyBinding, "control", true);
 		obs_data_set_bool(dummyBinding, "alt", true);
 		obs_data_set_bool(dummyBinding, "shift", true);
@@ -735,6 +736,19 @@ obs_data_t* Utils::GetSceneItemPropertiesData(obs_sceneitem_t* sceneItem) {
 	return data;
 }
 
+obs_data_t* Utils::GetSourceFilterInfo(obs_source_t* filter, bool includeSettings)
+{
+	obs_data_t* data = obs_data_create();
+	obs_data_set_bool(data, "enabled", obs_source_enabled(filter));
+	obs_data_set_string(data, "type", obs_source_get_id(filter));
+	obs_data_set_string(data, "name", obs_source_get_name(filter));
+	if (includeSettings) {
+		OBSDataAutoRelease settings = obs_source_get_settings(filter);
+		obs_data_set_obj(data, "settings", settings);
+	}
+	return data;
+}
+
 obs_data_array_t* Utils::GetSourceFiltersList(obs_source_t* source, bool includeSettings)
 {
 	struct enum_params {
@@ -755,13 +769,8 @@ obs_data_array_t* Utils::GetSourceFiltersList(obs_source_t* source, bool include
 	{
 		auto enumParams = reinterpret_cast<struct enum_params*>(param);
 
-		OBSDataAutoRelease filter = obs_data_create();
-		obs_data_set_string(filter, "type", obs_source_get_id(child));
-		obs_data_set_string(filter, "name", obs_source_get_name(child));
-		if (enumParams->includeSettings) {
-			obs_data_set_obj(filter, "settings", obs_source_get_settings(child));
-		}
-		obs_data_array_push_back(enumParams->filters, filter);
+		OBSDataAutoRelease filterData = Utils::GetSourceFilterInfo(child, enumParams->includeSettings);
+		obs_data_array_push_back(enumParams->filters, filterData);
 	}, &enumParams);
 
 	return enumParams.filters;
@@ -813,4 +822,18 @@ void Utils::PauseRecording(bool pause)
 	}
 
 	pauseRecording(pause); 
+}
+
+QString Utils::nsToTimestamp(uint64_t ns)
+{
+	uint64_t ms = ns / 1000000ULL;
+	uint64_t secs = ms / 1000ULL;
+	uint64_t minutes = secs / 60ULL;
+
+	uint64_t hoursPart = minutes / 60ULL;
+	uint64_t minutesPart = minutes % 60ULL;
+	uint64_t secsPart = secs % 60ULL;
+	uint64_t msPart = ms % 1000ULL;
+
+	return QString::asprintf("%02" PRIu64 ":%02" PRIu64 ":%02" PRIu64 ".%03" PRIu64, hoursPart, minutesPart, secsPart, msPart);
 }

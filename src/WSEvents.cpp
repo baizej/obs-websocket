@@ -23,26 +23,14 @@
 
 #include <QtWidgets/QPushButton>
 
-#include "Config.h"
-#include "Utils.h"
 #include "WSEvents.h"
 
 #include "obs-websocket.h"
+#include "Config.h"
+#include "Utils.h"
+#include "rpc/RpcEvent.h"
 
 #define STATUS_INTERVAL 2000
-
-QString nsToTimestamp(uint64_t ns) {
-	uint64_t ms = ns / 1000000ULL;
-	uint64_t secs = ms / 1000ULL;
-	uint64_t minutes = secs / 60ULL;
-
-	uint64_t hoursPart = minutes / 60ULL;
-	uint64_t minutesPart = minutes % 60ULL;
-	uint64_t secsPart = secs % 60ULL;
-	uint64_t msPart = ms % 1000ULL;
-
-	return QString::asprintf("%02" PRIu64 ":%02" PRIu64 ":%02" PRIu64 ".%03" PRIu64, hoursPart, minutesPart, secsPart, msPart);
-}
 
 const char* sourceTypeToString(obs_source_type type) {
 	switch (type) {
@@ -252,28 +240,11 @@ void WSEvents::FrontendEventHandler(enum obs_frontend_event event, void* private
 void WSEvents::broadcastUpdate(const char* updateType,
 	obs_data_t* additionalFields = nullptr)
 {
-	OBSDataAutoRelease update = obs_data_create();
-	obs_data_set_string(update, "update-type", updateType);
+	uint64_t streamTime = getStreamingTime();
+	uint64_t recordingTime = getStreamingTime();
+	RpcEvent event(QString(updateType), streamTime, recordingTime, additionalFields);
 
-	if (obs_frontend_streaming_active()) {
-		QString streamingTimecode = getStreamingTimecode();
-		obs_data_set_string(update, "stream-timecode", streamingTimecode.toUtf8().constData());
-	}
-
-	if (obs_frontend_recording_active()) {
-		QString recordingTimecode = getRecordingTimecode();
-		obs_data_set_string(update, "rec-timecode", recordingTimecode.toUtf8().constData());
-	}
-
-	if (additionalFields)
-		obs_data_apply(update, additionalFields);
-
-	QString json = obs_data_get_json(update);
-	_srv->broadcast(json.toStdString());
-
-	if (GetConfig()->DebugEnabled) {
-		blog(LOG_INFO, "Update << '%s'", json.toUtf8().constData());
-	}
+	_srv->broadcast(event);
 }
 
 void WSEvents::connectSourceSignals(obs_source_t* source) {
@@ -340,6 +311,26 @@ void WSEvents::disconnectSourceSignals(obs_source_t* source) {
 	signal_handler_disconnect(sh, "transition_start", OnTransitionBegin, this);
 }
 
+void WSEvents::connectFilterSignals(obs_source_t* filter) {
+	if (!filter) {
+		return;
+	}
+
+	signal_handler_t* sh = obs_source_get_signal_handler(filter);
+
+	signal_handler_connect(sh, "enable", OnSourceFilterVisibilityChanged, this);
+}
+
+void WSEvents::disconnectFilterSignals(obs_source_t* filter) {
+	if (!filter) {
+		return;
+	}
+
+	signal_handler_t* sh = obs_source_get_signal_handler(filter);
+
+	signal_handler_disconnect(sh, "enable", OnSourceFilterVisibilityChanged, this);
+}
+
 void WSEvents::hookTransitionBeginEvent() {
 	obs_frontend_source_list transitions = {};
 	obs_frontend_get_transitions(&transitions);
@@ -390,11 +381,11 @@ uint64_t WSEvents::getRecordingTime() {
 }
 
 QString WSEvents::getStreamingTimecode() {
-	return nsToTimestamp(getStreamingTime());
+	return Utils::nsToTimestamp(getStreamingTime());
 }
 
 QString WSEvents::getRecordingTimecode() {
-	return nsToTimestamp(getRecordingTime());
+	return Utils::nsToTimestamp(getRecordingTime());
 }
 
  /**
@@ -837,7 +828,9 @@ void WSEvents::Heartbeat() {
 	pulse = !pulse;
 	obs_data_set_bool(data, "pulse", pulse);
 
-	obs_data_set_string(data, "current-profile", obs_frontend_get_current_profile());
+	char* currentProfile = obs_frontend_get_current_profile();
+	obs_data_set_string(data, "current-profile", currentProfile);
+	bfree(currentProfile);
 
 	OBSSourceAutoRelease currentScene = obs_frontend_get_current_scene();
 	obs_data_set_string(data, "current-scene", obs_source_get_name(currentScene));
@@ -1180,6 +1173,8 @@ void WSEvents::OnSourceFilterAdded(void* param, calldata_t* data) {
 	if (!filter) {
 		return;
 	}
+	
+	self->connectFilterSignals(filter);
 
 	OBSDataAutoRelease filterSettings = obs_source_get_settings(filter);
 
@@ -1212,12 +1207,47 @@ void WSEvents::OnSourceFilterRemoved(void* param, calldata_t* data) {
 	}
 
 	obs_source_t* filter = calldata_get_pointer<obs_source_t>(data, "filter");
+	if (!filter) {
+		return;
+	}
+
+	self->disconnectFilterSignals(filter);
 
 	OBSDataAutoRelease fields = obs_data_create();
 	obs_data_set_string(fields, "sourceName", obs_source_get_name(source));
 	obs_data_set_string(fields, "filterName", obs_source_get_name(filter));
 	obs_data_set_string(fields, "filterType", obs_source_get_id(filter));
 	self->broadcastUpdate("SourceFilterRemoved", fields);
+}
+
+/**
+ * The visibility/enabled state of a filter changed
+ *
+ * @return {String} `sourceName` Source name
+ * @return {String} `filterName` Filter name
+ * @return {Boolean} `filterEnabled` New filter state
+ *
+ * @api events
+ * @name SourceFilterVisibilityChanged
+ * @category sources
+ * @since 4.7.0
+ */
+void WSEvents::OnSourceFilterVisibilityChanged(void* param, calldata_t* data) {
+	auto self = reinterpret_cast<WSEvents*>(param);
+
+	OBSSource source = calldata_get_pointer<obs_source_t>(data, "source");
+	if (!source) {
+		return;
+	}
+
+	OBSSource parent = obs_filter_get_parent(source);
+
+	OBSDataAutoRelease fields = obs_data_create();
+	obs_data_set_string(fields, "sourceName", obs_source_get_name(parent));
+	obs_data_set_string(fields, "filterName", obs_source_get_name(source));
+	obs_data_set_bool(fields, "filterEnabled", obs_source_enabled(source));
+
+	self->broadcastUpdate("SourceFilterVisibilityChanged", fields);
 }
 
 /**

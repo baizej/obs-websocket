@@ -95,6 +95,7 @@ auth_response = base64_encode(auth_response_hash)
     + [SourceRenamed](#sourcerenamed)
     + [SourceFilterAdded](#sourcefilteradded)
     + [SourceFilterRemoved](#sourcefilterremoved)
+    + [SourceFilterVisibilityChanged](#sourcefiltervisibilitychanged)
     + [SourceFiltersReordered](#sourcefiltersreordered)
     + [SourceOrderChanged](#sourceorderchanged)
     + [SceneItemAdded](#sceneitemadded)
@@ -178,11 +179,13 @@ auth_response = base64_encode(auth_response_hash)
     + [SetBrowserSourceProperties](#setbrowsersourceproperties)
     + [GetSpecialSources](#getspecialsources)
     + [GetSourceFilters](#getsourcefilters)
+    + [GetSourceFilterInfo](#getsourcefilterinfo)
     + [AddFilterToSource](#addfiltertosource)
     + [RemoveFilterFromSource](#removefilterfromsource)
     + [ReorderSourceFilter](#reordersourcefilter)
     + [MoveSourceFilter](#movesourcefilter)
     + [SetSourceFilterSettings](#setsourcefiltersettings)
+    + [SetSourceFilterVisibility](#setsourcefiltervisibility)
     + [TakeSourceScreenshot](#takesourcescreenshot)
   * [Streaming](#streaming-1)
     + [GetStreamingStatus](#getstreamingstatus)
@@ -913,6 +916,24 @@ A filter was removed from a source.
 | `sourceName` | _String_ | Source name |
 | `filterName` | _String_ | Filter name |
 | `filterType` | _String_ | Filter type |
+
+
+---
+
+### SourceFilterVisibilityChanged
+
+
+- Added in v4.7.0
+
+The visibility/enabled state of a filter changed
+
+**Response Items:**
+
+| Name | Type  | Description |
+| ---- | :---: | ------------|
+| `sourceName` | _String_ | Source name |
+| `filterName` | _String_ | Filter name |
+| `filterEnabled` | _Boolean_ | New filter state |
 
 
 ---
@@ -2619,9 +2640,37 @@ List filters applied to a source
 | Name | Type  | Description |
 | ---- | :---: | ------------|
 | `filters` | _Array&lt;Object&gt;_ | List of filters for the specified source |
+| `filters.*.enabled` | _Boolean_ | Filter status (enabled or not) |
 | `filters.*.type` | _String_ | Filter type |
 | `filters.*.name` | _String_ | Filter name |
 | `filters.*.settings` | _Object_ | Filter settings |
+
+
+---
+
+### GetSourceFilterInfo
+
+
+- Added in v4.7.0
+
+List filters applied to a source
+
+**Request Fields:**
+
+| Name | Type  | Description |
+| ---- | :---: | ------------|
+| `sourceName` | _String_ | Source name |
+| `filterName` | _String_ | Source filter name |
+
+
+**Response Items:**
+
+| Name | Type  | Description |
+| ---- | :---: | ------------|
+| `enabled` | _Boolean_ | Filter status (enabled or not) |
+| `type` | _String_ | Filter type |
+| `name` | _String_ | Filter name |
+| `settings` | _Object_ | Filter settings |
 
 
 ---
@@ -2736,6 +2785,28 @@ _No additional response items._
 
 ---
 
+### SetSourceFilterVisibility
+
+
+- Added in v4.7.0
+
+Change the visibility/enabled state of a filter
+
+**Request Fields:**
+
+| Name | Type  | Description |
+| ---- | :---: | ------------|
+| `sourceName` | _String_ | Source name |
+| `filterName` | _String_ | Source filter name |
+| `filterEnabled` | _Boolean_ | New filter state |
+
+
+**Response Items:**
+
+_No additional response items._
+
+---
+
 ### TakeSourceScreenshot
 
 
@@ -2752,7 +2823,7 @@ preserved if only one of these two parameters is specified.
 
 | Name | Type  | Description |
 | ---- | :---: | ------------|
-| `sourceName` | _String_ | Source name |
+| `sourceName` | _String_ | Source name. Note that, since scenes are also sources, you can also provide a scene name. |
 | `embedPictureFormat` | _String (optional)_ | Format of the Data URI encoded picture. Can be "png", "jpg", "jpeg" or "bmp" (or any other value supported by Qt's Image module) |
 | `saveToFilePath` | _String (optional)_ | Full file path (file extension included) where the captured image is to be saved. Can be in a format different from `pictureFormat`. Can be a relative path. |
 | `width` | _int (optional)_ | Screenshot width. Defaults to the source's base width. |
