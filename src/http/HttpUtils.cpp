@@ -91,7 +91,6 @@ void handleIfAuthorized(server::connection_ptr con, std::function<std::string(Co
 
 bool matchRoute(const QString& routeSpec, const QString& requestUri)
 {
-
 	QString spec = routeSpec.trimmed();
 	// TODO regex parsing
 	if (spec.endsWith("/")) {
