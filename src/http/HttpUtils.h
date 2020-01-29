@@ -45,7 +45,6 @@ namespace http
     } RouterEntry;
 
     void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
-    // void handleRouteAsync(server::connection_ptr con, std::string method, std::string routePrefix, std::function<void()> handlerCb);
 
     bool simpleAsyncRouter(server::connection_ptr connection, QList<http::RouterEntry> routes);
 }

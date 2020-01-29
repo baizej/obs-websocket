@@ -68,27 +68,6 @@ void handleIfAuthorized(server::connection_ptr con, std::function<std::string(Co
 	}
 }
 
-// void handleRouteAsync(server::connection_ptr con, std::string method, std::string routePrefix, std::function<void()> handlerCb)
-// {
-// 	auto httpRequest = con->get_request();
-// 	if (httpRequest.get_method() != method) {
-// 		return;
-// 	}
-
-// 	websocketpp::uri_ptr requestUri = con->get_uri();
-// 	auto uriResource = QString::fromStdString(requestUri->get_resource());
-// 	if (!uriResource.startsWith(QString::fromStdString(routePrefix))) {
-// 		return;
-// 	}
-
-// 	con->defer_http_response();
-// 	QtConcurrent::run([=]() {
-// 		handlerCb();
-// 		websocketpp::lib::error_code ec;
-// 		con->send_http_response(ec);
-// 	});
-// }
-
 bool matchRoute(const QString& routeSpec, const QString& requestUri)
 {
 	QString spec = routeSpec.trimmed();
