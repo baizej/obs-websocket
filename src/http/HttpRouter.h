@@ -26,14 +26,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 namespace http 
 {
     enum Method {
-        UNKNOWN_METHOD = 0,
-        ANY_METHOD,
-        GET,
-        OPTIONS,
-        HEAD,
-        POST,
-        PUT,
-        DELETE
+        UnknownMethod = 0,
+        AnyMethod,
+        Get,
+        Options,
+        Head,
+        Post,
+        Put,
+        Delete
     };
     
 }

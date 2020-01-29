@@ -26,16 +26,16 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "HttpUtils.h"
 
 static const QHash<QString, http::Method> methodMap {
-	{ "GET", http::Method::GET },
-	{ "OPTIONS", http::Method::OPTIONS },
-	{ "HEAD", http::Method::HEAD },
-	{ "POST", http::Method::POST },
-	{ "PUT", http::Method::PUT },
-	{ "DELETE", http::Method::DELETE }
+	{ "GET", http::Method::Get },
+	{ "OPTIONS", http::Method::Options },
+	{ "HEAD", http::Method::Head },
+	{ "POST", http::Method::Post },
+	{ "PUT", http::Method::Put },
+	{ "DELETE", http::Method::Delete }
 };
 
 http::Method methodStringToEnum(const QString& method) {
-	return methodMap.value(method, http::Method::UNKNOWN_METHOD);
+	return methodMap.value(method, http::Method::UnknownMethod);
 }
 
 HttpRouter::HttpRouter(QList<RouterEntry> routes) :
@@ -59,7 +59,7 @@ bool HttpRouter::handleConnection(server::connection_ptr connection)
 	for (RouterEntry route : _routes) {
 		if (
 			matchesRoute(route.spec, requestUri) &&
-			(route.method == http::Method::ANY_METHOD || requestMethod == route.method)
+			(route.method == http::Method::AnyMethod || requestMethod == route.method)
 		) {
 			HttpUtils::wrapAsync(connection, [connection, route]() {
 				route.routeCallback(connection);
