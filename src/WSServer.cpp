@@ -32,6 +32,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "Config.h"
 #include "Utils.h"
 #include "protocol/OBSRemoteProtocol.h"
+#include "http/HttpUtils.h"
 
 QT_USE_NAMESPACE
 
@@ -203,59 +204,6 @@ void WSServer::onMessage(connection_hdl hdl, server::message_ptr message)
 	});
 }
 
-void handleHttpIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
-{
-	websocketpp::http::parser::request request = con->get_request();
-
-	ConnectionProperties connProperties;
-	if (GetConfig()->AuthRequired) {
-		QString authHeaderValue = QString::fromStdString(
-			request.get_header("Authorization")
-		);
-
-		if (GetConfig()->CheckHttpAuth(authHeaderValue)) {
-			connProperties.setAuthenticated(true);
-		} else {
-			con->set_status(websocketpp::http::status_code::unauthorized);
-			con->append_header("WWW-Authenticate", "Basic realm=\"obs-websocket\"");
-			con->set_body("");
-			return;
-		}
-	}
-
-	// can get overriden by the handler callback
-	con->set_status(websocketpp::http::status_code::ok);
-
-	std::string requestBody = request.get_body();
-	std::string responseBody = handlerCb(connProperties, requestBody);
-
-	if (!responseBody.empty()) {
-		con->set_body(responseBody);
-	}
-}
-
-void handleHttpRouteAsync(server::connection_ptr con, std::string method, std::string routePrefix, std::function<void()> handlerCb)
-{
-	auto httpRequest = con->get_request();
-	if (httpRequest.get_method() != method) {
-		return;
-	}
-
-	websocketpp::uri_ptr requestUri = con->get_uri();
-	auto uriResource = QString::fromStdString(requestUri->get_resource());
-	
-	if (!uriResource.startsWith(QString::fromStdString(routePrefix))) {
-		return;
-	}
-
-	con->defer_http_response();
-	QtConcurrent::run([=]() {
-		handlerCb();
-		websocketpp::lib::error_code ec;
-		con->send_http_response(ec);
-	});
-}
-
 void WSServer::onHttpRequest(connection_hdl hdl)
 {
 	server::connection_ptr con = _server.get_con_from_hdl(hdl);
@@ -264,8 +212,8 @@ void WSServer::onHttpRequest(connection_hdl hdl)
 	}
 
 	// special case: handle POST requests to /execute
-	handleHttpRouteAsync(con, "POST", "/execute", [con](){
-		handleHttpIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+	http::handleRouteAsync(con, "POST", "/execute", [con](){
+		http::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
 			WSRequestHandler requestHandler(connProperties);
 			OBSRemoteProtocol protocol;
 			return protocol.processMessage(requestHandler, requestBody);
