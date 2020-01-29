@@ -25,6 +25,27 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 namespace http 
 {
+    enum Method {
+        UNKNOWN_METHOD = 0,
+        ANY_METHOD,
+        GET,
+        OPTIONS,
+        HEAD,
+        POST,
+        PUT,
+        DELETE
+    };
+
+    typedef std::function<void()> RouteHandler;
+
+    typedef struct {
+        Method method;
+        QString spec;
+        RouteHandler routeCallback;
+    } RouterEntry;
+
     void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
-    void handleRouteAsync(server::connection_ptr con, std::string method, std::string routePrefix, std::function<void()> handlerCb);
+    // void handleRouteAsync(server::connection_ptr con, std::string method, std::string routePrefix, std::function<void()> handlerCb);
+
+    bool simpleAsyncRouter(QList<RouterEntry> entries);
 }

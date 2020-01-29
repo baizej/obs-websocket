@@ -16,11 +16,26 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include <QtConcurrent/QtConcurrent>
-
 #include "HttpUtils.h"
 
+#include <QtConcurrent/QtConcurrent>
+#include <QtCore/QHash>
+#include <QtCore/QMultiHash>
+
 #include "../Config.h"
+
+static const QHash<http::Method, QString> methodMap {
+	{ http::Method::GET, "GET" },
+	{ http::Method::OPTIONS, "OPTIONS" },
+	{ http::Method::HEAD, "HEAD" },
+	{ http::Method::POST, "POST" },
+	{ http::Method::PUT, "PUT" },
+	{ http::Method::DELETE, "DELETE" }
+};
+
+http::Method methodStringToEnum(const QString& method) {
+	return methodMap.key(method, http::Method::UNKNOWN_METHOD);
+}
 
 void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
 {
@@ -53,24 +68,67 @@ void handleIfAuthorized(server::connection_ptr con, std::function<std::string(Co
 	}
 }
 
-void handleRouteAsync(server::connection_ptr con, std::string method, std::string routePrefix, std::function<void()> handlerCb)
+// void handleRouteAsync(server::connection_ptr con, std::string method, std::string routePrefix, std::function<void()> handlerCb)
+// {
+// 	auto httpRequest = con->get_request();
+// 	if (httpRequest.get_method() != method) {
+// 		return;
+// 	}
+
+// 	websocketpp::uri_ptr requestUri = con->get_uri();
+// 	auto uriResource = QString::fromStdString(requestUri->get_resource());
+// 	if (!uriResource.startsWith(QString::fromStdString(routePrefix))) {
+// 		return;
+// 	}
+
+// 	con->defer_http_response();
+// 	QtConcurrent::run([=]() {
+// 		handlerCb();
+// 		websocketpp::lib::error_code ec;
+// 		con->send_http_response(ec);
+// 	});
+// }
+
+bool matchRoute(const QString& routeSpec, const QString& requestUri)
 {
-	auto httpRequest = con->get_request();
-	if (httpRequest.get_method() != method) {
-		return;
+
+	QString spec = routeSpec.trimmed();
+	// TODO regex parsing
+	if (spec.endsWith("/")) {
+		spec.chop(1);
+	}
+	return requestUri.startsWith(routeSpec);
+}
+
+bool simpleAsyncRouter(server::connection_ptr connection, QList<http::RouterEntry> routes)
+{
+	websocketpp::config::asio::request_type httpRequest = connection->get_request();
+
+	QString requestUri = QString::fromStdString(
+		connection->get_uri()->get_resource()
+	);
+
+	QString methodString = QString::fromStdString(
+		httpRequest.get_method()
+	);
+	http::Method requestMethod = methodStringToEnum(methodString);
+
+	for (http::RouterEntry route : routes) {
+		if (
+			matchRoute(route.spec, requestUri) &&
+			(route.method == http::Method::ANY_METHOD || requestMethod == route.method)
+		) {
+			connection->defer_http_response();
+			QtConcurrent::run([connection, route]() {
+				route.routeCallback();
+
+				websocketpp::lib::error_code ec;
+				connection->send_http_response(ec);
+			});
+
+			return true;
+		}
 	}
 
-	websocketpp::uri_ptr requestUri = con->get_uri();
-	auto uriResource = QString::fromStdString(requestUri->get_resource());
-	
-	if (!uriResource.startsWith(QString::fromStdString(routePrefix))) {
-		return;
-	}
-
-	con->defer_http_response();
-	QtConcurrent::run([=]() {
-		handlerCb();
-		websocketpp::lib::error_code ec;
-		con->send_http_response(ec);
-	});
+	return false;
 }

@@ -211,18 +211,24 @@ void WSServer::onHttpRequest(connection_hdl hdl)
 		return;
 	}
 
-	// special case: handle POST requests to /execute
-	http::handleRouteAsync(con, "POST", "/execute", [con](){
-		http::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
-			WSRequestHandler requestHandler(connProperties);
-			OBSRemoteProtocol protocol;
-			return protocol.processMessage(requestHandler, requestBody);
-		});
+	bool routeMatched = http::simpleAsyncRouter({
+		{
+			http::Method::POST, "/execute",
+			[con]() {
+				http::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+					WSRequestHandler requestHandler(connProperties);
+					OBSRemoteProtocol protocol;
+					return protocol.processMessage(requestHandler, requestBody);
+				});
+			}
+		}
 	});
 
-	// default case: return 426 Upgrade Required
-	con->set_status(websocketpp::http::status_code::upgrade_required);
-	con->set_body("");
+	if (!routeMatched) {
+		// default case: return 426 Upgrade Required
+		con->set_status(websocketpp::http::status_code::upgrade_required);
+		con->set_body("");
+	}
 }
 
 void WSServer::onClose(connection_hdl hdl)
