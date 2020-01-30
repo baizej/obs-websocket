@@ -35,7 +35,6 @@ namespace http
         Put,
         Delete
     };
-    
 }
 
 class HttpRouter {
@@ -48,7 +47,7 @@ public:
         RouteHandler routeCallback;
     } RouterEntry;
 
-    explicit HttpRouter(QList<RouterEntry> routes = {});
+    explicit HttpRouter(QList<RouterEntry> routes);
     bool handleConnection(server::connection_ptr connection);
 
 private:

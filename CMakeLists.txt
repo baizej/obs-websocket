@@ -178,6 +178,8 @@ endif()
 
 # --- Linux-specific build settings and tasks ---
 if(UNIX AND NOT APPLE)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
+
 	set_target_properties(obs-websocket PROPERTIES PREFIX "")
 	target_link_libraries(obs-websocket obs-frontend-api)
 

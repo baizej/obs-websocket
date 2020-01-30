@@ -42,25 +42,24 @@ using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
 
-
+const QList<HttpRouter::RouterEntry> httpRoutes = {
+	{
+		http::Method::Post, "/execute", [](server::connection_ptr con) {
+			HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+				WSRequestHandler requestHandler(connProperties);
+				OBSRemoteProtocol protocol;
+				return protocol.processMessage(requestHandler, requestBody);
+			});
+		}
+	}
+};
 
 WSServer::WSServer()
 	: QObject(nullptr),
 	  _connections(),
-	  _clMutex(QMutex::Recursive)
+	  _clMutex(QMutex::Recursive),
+	  _httpRouter(httpRoutes)
 {
-	_httpRouter = HttpRouter({
-		{
-			http::Method::Post, "/execute", [](server::connection_ptr con) {
-				HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
-					WSRequestHandler requestHandler(connProperties);
-					OBSRemoteProtocol protocol;
-					return protocol.processMessage(requestHandler, requestBody);
-				});
-			}
-		}
-	});
-
 	_server.init_asio();
 #ifndef _WIN32
 	_server.set_reuse_addr(true);
