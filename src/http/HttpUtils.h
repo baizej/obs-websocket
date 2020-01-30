@@ -28,5 +28,5 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 namespace HttpUtils
 {
     void wrapAsync(server::connection_ptr connection, std::function<void()> callback);
-    void handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
+    std::string handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb);
 }

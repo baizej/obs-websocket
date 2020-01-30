@@ -34,7 +34,7 @@ void HttpUtils::wrapAsync(server::connection_ptr connection, std::function<void(
 	});
 }
 
-void HttpUtils::handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
+std::string HttpUtils::handleIfAuthorized(server::connection_ptr con, std::function<std::string(ConnectionProperties&, std::string)> handlerCb)
 {
 	websocketpp::http::parser::request request = con->get_request();
 
@@ -50,17 +50,10 @@ void HttpUtils::handleIfAuthorized(server::connection_ptr con, std::function<std
 			con->set_status(websocketpp::http::status_code::unauthorized);
 			con->append_header("WWW-Authenticate", "Basic realm=\"obs-websocket\"");
 			con->set_body("");
-			return;
+			return std::string();
 		}
 	}
 
-	// can get overriden by the handler callback
-	con->set_status(websocketpp::http::status_code::ok);
-
 	std::string requestBody = request.get_body();
-	std::string responseBody = handlerCb(connProperties, requestBody);
-
-	if (!responseBody.empty()) {
-		con->set_body(responseBody);
-	}
+	return handlerCb(connProperties, requestBody);
 }

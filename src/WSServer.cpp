@@ -44,7 +44,7 @@ using websocketpp::lib::bind;
 
 const QList<HttpRouter::RouterEntry> httpRoutes = {
 	ROUTER_ENTRY(http::Method::Post, "/execute", [](server::connection_ptr con) {
-		HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+		return HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
 			WSRequestHandler requestHandler(connProperties);
 			OBSRemoteProtocol protocol;
 			return protocol.processMessage(requestHandler, requestBody);

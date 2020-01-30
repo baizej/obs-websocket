@@ -41,7 +41,7 @@ namespace http
 
 class HttpRouter {
 public:
-    typedef std::function<void(server::connection_ptr)> RouteHandler;
+    typedef std::function<std::string(server::connection_ptr)> RouteHandler;
 
     typedef struct {
         http::Method method;

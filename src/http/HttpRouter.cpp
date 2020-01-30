@@ -62,7 +62,13 @@ bool HttpRouter::handleConnection(server::connection_ptr connection)
 			(route.method == http::Method::AnyMethod || requestMethod == route.method)
 		) {
 			HttpUtils::wrapAsync(connection, [connection, route]() {
-				route.routeCallback(connection);
+				// can get overriden by the handler callback
+				connection->set_status(websocketpp::http::status_code::ok);
+
+				std::string responseBody = route.routeCallback(connection);
+				if (!responseBody.empty()) {
+					connection->set_body(responseBody);
+				}
 			});
 			return true;
 		}
