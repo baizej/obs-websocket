@@ -23,6 +23,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "../server-defs.h"
 
+#define ROUTER_ENTRY(method, route, handler) { method, route, handler }
+
 namespace http 
 {
     enum Method {

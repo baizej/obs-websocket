@@ -43,15 +43,13 @@ using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
 
 const QList<HttpRouter::RouterEntry> httpRoutes = {
-	{
-		http::Method::Post, "/execute", [](server::connection_ptr con) {
-			HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
-				WSRequestHandler requestHandler(connProperties);
-				OBSRemoteProtocol protocol;
-				return protocol.processMessage(requestHandler, requestBody);
-			});
-		}
-	}
+	ROUTER_ENTRY(http::Method::Post, "/execute", [](server::connection_ptr con) {
+		HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+			WSRequestHandler requestHandler(connProperties);
+			OBSRemoteProtocol protocol;
+			return protocol.processMessage(requestHandler, requestBody);
+		});
+	})
 };
 
 WSServer::WSServer()
