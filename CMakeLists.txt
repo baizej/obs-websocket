@@ -63,6 +63,7 @@ set(obs-websocket_HEADERS
 	src/WSEvents.h
 	src/Config.h
 	src/Utils.h
+	src/SimpleResult.h
 	src/rpc/RpcRequest.h
 	src/rpc/RpcResponse.h
 	src/rpc/RpcEvent.h
