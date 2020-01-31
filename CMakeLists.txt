@@ -88,6 +88,9 @@ target_link_libraries(obs-websocket
 	Qt5::Core
 	Qt5::Widgets)
 
+set_property(TARGET obs-websocket PROPERTY CXX_STANDARD 11)
+set_property(TARGET obs-websocket PROPERTY CXX_STANDARD_REQUIRED ON)
+
 # --- End of section ---
 
 # --- Windows-specific build settings and tasks ---
