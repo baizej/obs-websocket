@@ -28,7 +28,7 @@ class RpcEvent;
 class OBSRemoteProtocol
 {
 public:
-	std::string processMessage(WSRequestHandler& requestHandler, std::string message);
+	std::string processMessage(WSRequestHandler& requestHandler, std::string message, bool messageIdRequired);
 	std::string encodeEvent(const RpcEvent& event);
 
 private:

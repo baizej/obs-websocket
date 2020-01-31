@@ -44,10 +44,10 @@ using websocketpp::lib::bind;
 
 const QList<HttpRouter::RouterEntry> httpRoutes = {
 	ROUTER_ENTRY(http::Method::Post, "/execute", [](server::connection_ptr con) {
-		return HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody){
+		return HttpUtils::handleIfAuthorized(con, [](ConnectionProperties& connProperties, std::string requestBody) {
 			WSRequestHandler requestHandler(connProperties);
 			OBSRemoteProtocol protocol;
-			return protocol.processMessage(requestHandler, requestBody);
+			return protocol.processMessage(requestHandler, requestBody, false);
 		});
 	})
 };
@@ -200,7 +200,7 @@ void WSServer::onMessage(connection_hdl hdl, server::message_ptr message)
 
 		WSRequestHandler requestHandler(connProperties);
 		OBSRemoteProtocol protocol;
-		std::string response = protocol.processMessage(requestHandler, payload);
+		std::string response = protocol.processMessage(requestHandler, payload, true);
 
 		if (GetConfig()->DebugEnabled) {
 			blog(LOG_INFO, "Response << '%s'", response.c_str());
